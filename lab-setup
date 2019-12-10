@@ -8,6 +8,8 @@
 import os
 import shutil
 import config
+import requests
+import sys
 
 def read_deps(deps_file):
 
@@ -25,10 +27,6 @@ def install_deps(deps):
 
 def build_wireshark():
 
-    deps = read_deps(config.wireshark_deps)
-
-    install_deps(deps)
-
     wireshark_version = config.wireshark_version
     
     wireshark_tar = config.wireshark_tar
@@ -37,9 +35,28 @@ def build_wireshark():
     wireshark_build_dir = config.wireshark_build_dir
     cmake_options_file = config.wireshark_cmake_options_file
     cmake_options_file_bak = config.wireshark_cmake_options_file_bak
+
+    response = requests.head(wireshark_url)
+    if response.status_code == 404:
+
+        print('[!] It looks like the Wireshark version in '
+                './wireshark_version_number is out of date.')
+        print()
+        print('[!] Please obtain the latest stable release number from: '
+            'https://www.wireshark.org/download.html')
+        print()
+        print('[!] Then, update the release number in '
+            './wireshark_version_number and rerun this script.')
+        print()
+        sys.exit()
+
+    deps = read_deps(config.wireshark_deps)
+
+    install_deps(deps)
     
     print('[*] Downloading wireshark tarball...')
     os.system('wget {}'.format(wireshark_url))
+
     print('[*] Extracting wireshark tarball...')
     os.system('tar xJf {}'.format(wireshark_tar))
     

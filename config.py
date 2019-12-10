@@ -1,6 +1,8 @@
 import os
 
-wireshark_version = '3.1.1'
+with open('wireshark_version_number') as fd:
+    wireshark_version = fd.read().strip()
+
 wireshark_deps = 'dependencies/wireshark.txt'
 wireshark_tar = 'wireshark-{}.tar.xz'.format(wireshark_version)
 wireshark_url = 'https://1.na.dl.wireshark.org/src/{}'.format(wireshark_tar)
