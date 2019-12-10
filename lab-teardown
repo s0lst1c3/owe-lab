@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+# Name:         build-wireshark-dev
+# Author:       @s0lst1c3
+# Email:        gabriel@specterops.io
+# Description:  Automates the build process for Wireshark 3.1.X (dev) on Kali
+# Last tested:  Nov 12 2019
+
+import os
+import shutil
+import config
+
+'''
+
+eaphammer symlink
+eaphammer-dir
+hostapd symlink
+hostapd-owe dir
+wireshark-symlink
+wireshark-build dir
+wpa_supplicant symlink
+
+'''
+
+def remove_wireshark():
+
+    wireshark_build_dir = config.wireshark_build_dir
+
+    print('[*] Removing wireshark symlink...')
+    try:
+        os.unlink('wireshark')
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] Wireshark symlink already removed... aborting step')
+
+    print('[*] Removing wireshark build dir...')
+    try:
+        shutil.rmtree(wireshark_build_dir)
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] Wireshark build dir already removed... aborting step')
+
+def remove_eaphammer():
+
+    print('[*] Removing eaphammer symlink...')
+    try:
+        os.unlink('eaphammer')
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] EAPHammer symlink already removed... aborting step')
+
+    print('[*] Removing eaphammer build dir...')
+    try:
+        shutil.rmtree('eaphammer-dir')
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] EAPHammer build dir already removed... aborting step')
+
+
+def remove_hostap_owe():
+
+    print('[*] Removing wpa_supplicant symlink...')
+    try:
+        os.unlink('wpa_supplicant')
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] wpa_suplicant symlink already removed... aborting step')
+
+    print('[*] Removing hostapd symlink...')
+    try:
+        os.unlink('hostapd')
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] hostapd symlink already removed... aborting step')
+
+    print('[*] Removing hostap-owe build dir...')
+    try:
+        shutil.rmtree('hostap-owe')
+        print('[*] Complete!')
+    except FileNotFoundError:
+        print('[!] hostap-owe build dir already removed... aborting step')
+
+if __name__ == '__main__':
+    remove_wireshark()
+    remove_eaphammer()
+    remove_hostap_owe()

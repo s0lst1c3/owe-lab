@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+# Name:         build-wireshark-dev
+# Author:       @s0lst1c3
+# Email:        gabriel@specterops.io
+# Description:  Automates the build process for Wireshark 3.1.X (dev) on Kali
+# Last tested:  Dec 20 2019
+
+import os
+import shutil
+import config
+
+def read_deps(deps_file):
+
+    deps = []
+    with open(deps_file) as fd:
+        for line in fd:
+            deps.append(line.strip())
+            
+    return deps
+
+def install_deps(deps):
+
+    # install deps
+    os.system('apt -y install {}'.format(' '.join(deps)))
+
+def build_wireshark():
+
+    deps = read_deps(config.wireshark_deps)
+
+    install_deps(deps)
+
+    wireshark_version = config.wireshark_version
+    
+    wireshark_tar = config.wireshark_tar
+    wireshark_url = config.wireshark_url
+    wireshark_dir = config.wireshark_dir
+    wireshark_build_dir = config.wireshark_build_dir
+    cmake_options_file = config.wireshark_cmake_options_file
+    cmake_options_file_bak = config.wireshark_cmake_options_file_bak
+    
+    print('[*] Downloading wireshark tarball...')
+    os.system('wget {}'.format(wireshark_url))
+    print('[*] Extracting wireshark tarball...')
+    os.system('tar xJf {}'.format(wireshark_tar))
+    
+    print('[*] Creating wireshark build dir...')
+    try:
+        os.makedirs(wireshark_build_dir)
+    except OSError as e:
+        print('[!] Wireshark build dir already present... aborting step')
+        pass
+    
+    print('[*] Creating backup of Wireshark default camke options file')
+    shutil.copyfile(cmake_options_file, cmake_options_file_bak)
+    
+    print('[*] Updating Wireshark default cmake options '
+            'file with something that actually works...')
+    with open(cmake_options_file_bak) as input_handle:
+        with open(cmake_options_file, 'w') as output_handle:
+            for line in input_handle:
+                if line.startswith('option(DISABLE_WERROR'):
+                    output_handle.write('option(DISABLE_WERROR    '
+                                '"Do not treat warnings as errors" ON)\n')
+                else:
+                    output_handle.write(line)
+                
+    print('[*] Running CMAKE... fingeres crossed!')
+    os.system('cd {} && cmake ../{} && make'.format(wireshark_build_dir,
+                                                            wireshark_dir))
+
+    print('[*] Creating friendly symlink to wireshark binary...')
+    os.symlink(config.wireshark_bin, 'wireshark')
+
+    print('[*] Removing wireshark tarball')
+    os.system('rm -rf {}'.format(wireshark_tar))
+
+    print('[*] Removing wireshark download dir')
+    os.system('rm -rf {}'.format(wireshark_dir))
+
+def build_eaphammer():
+
+    os.system('git clone https://github.com/s0lst1c3/eaphammer.git')
+
+    os.system('cd eaphammer && ./kali-setup')
+    os.system('mv eaphammer eaphammer-dir')
+    os.symlink('eaphammer-dir/eaphammer', 'eaphammer')
+
+def build_wpa_supplicant():
+
+    defconfig = config.hostap_owe_wpa_supplicant_defconfig
+    dotconfig = config.hostap_owe_wpa_supplicant_dotconfig
+    build_dir = config.hostap_owe_wpa_supplicant_dir 
+    wpa_supplicant_bin = config.hostap_owe_wpa_supplicant_bin
+
+    print('[build_wpa_supplicant] Copying defconfig to .config')
+    shutil.copyfile(defconfig, dotconfig)
+
+    print('[build_wpa_supplicant] Running make')
+    os.system('cd {}  && make'.format(build_dir))
+
+    print('[build_wpa_supplicant] Creating symlink to root dir')
+    os.symlink(wpa_supplicant_bin, 'wpa_supplicant')
+
+def build_hostapd():
+
+    defconfig = config.hostap_owe_hostapd_defconfig
+    dotconfig = config.hostap_owe_hostapd_dotconfig
+    build_dir = config.hostap_owe_hostapd_dir 
+    hostapd_bin = config.hostap_owe_hostapd_bin
+
+    print('[build_hostapd] Copying defconfig to .config')
+    shutil.copyfile(defconfig, dotconfig)
+
+    print('[build_hostapd] Running make')
+    os.system('cd {}  && make'.format(build_dir))
+
+    print('[build_hostapd] Creating symlink to root dir')
+    os.symlink(hostapd_bin, 'hostapd')
+
+def build_hostap_owe():
+
+    os.system('git clone https://github.com/s0lst1c3/hostap-owe')
+
+    build_wpa_supplicant()
+    build_hostapd()
+
+if __name__ == '__main__':
+
+    build_wireshark()
+    build_eaphammer()
+    build_hostap_owe()
